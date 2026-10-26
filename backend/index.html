@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+</head>
+<body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+        <input id="input" type="text" autocomplete="off"/>
+        <button>Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // tæller hvor mange beskeder
+        let counter = 0;
+
+        // konstant til at oprette en websocket med tid og antal forsøg
+        const socket = io({auth: {serverOffset: 0}, ackTimeout: 10000, retries: 3});
+        // henter vores html-elementer fra vores fil
+        const form = document.getElementById('form');
+        const input = document.getElementById('input')
+        const messages = document.getElementById('messages')
+
+        // vores form skal lytte på submit med vores eventlistener
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Hvis der er value inde i vores input så refresh
+            if (input.value){
+                const clientOffset = `${socket.id}-${counter++}`
+                socket.emit('chat msg', input.value, clientOffset);
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', (msg, serverOffset) => {
+            const item = document.createElement('li')
+            item.textContent = msg;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+            socket.auth.serverOffset = serverOffset;
+        })
+    </script>
+</body>
+</html>
